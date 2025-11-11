@@ -220,3 +220,138 @@
     document.head.appendChild(style);
   }
 })();
+
+// ===== News Hub: History Today (Wikipedia On This Day feed) =====
+(function () {
+  function ensureHistoryTodayUI() {
+    var hub = document.getElementById('newshub');
+    if (!hub || hub.__history_today_initialized) return;
+
+    // Create inner tabs container if missing
+    var tabs = hub.querySelector('.inner-tabs');
+    if (!tabs) {
+      tabs = document.createElement('nav');
+      tabs.className = 'inner-tabs';
+      hub.prepend(tabs);
+    }
+
+    // History Today tab button
+    var btn = document.createElement('button');
+    btn.className = 'tablink gold';
+    btn.textContent = '📜 History Today';
+    btn.setAttribute('onclick', "openInnerTab('history-today')");
+    tabs.appendChild(btn);
+
+    // History Today content panel
+    var panel = document.createElement('section');
+    panel.className = 'inner-tabcontent';
+    panel.id = 'history-today';
+    panel.style.display = 'block';
+
+    panel.innerHTML = [
+      '<div class="card">',
+      '  <div class="row" style="gap: 12px; align-items: center;">',
+      '    <label for="ht-date"><strong>Select date:</strong></label>',
+      '    <input type="date" id="ht-date" />',
+      '    <button id="ht-refresh" class="button">Refresh</button>',
+      '  </div>',
+      '  <div id="ht-status" class="muted" style="margin-top: 8px;">Loading...</div>',
+      '  <ul id="ht-list" class="list" style="margin-top: 8px;"></ul>',
+      '</div>'
+    ].join('');
+
+    hub.appendChild(panel);
+
+    // Default date = today
+    var dateInput = panel.querySelector('#ht-date');
+    var statusEl = panel.querySelector('#ht-status');
+    var listEl = panel.querySelector('#ht-list');
+    var refreshBtn = panel.querySelector('#ht-refresh');
+
+    function toInputDate(d) {
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + dd;
+    }
+
+    function fetchOnThisDay(dateStr) {
+      // Wikipedia REST On This Day: /events/{mm}/{dd}
+      try {
+        var parts = dateStr.split('-'); // yyyy-mm-dd
+        var mm = String(parseInt(parts[1], 10));
+        var dd = String(parseInt(parts[2], 10));
+        var url = 'https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/' + mm + '/' + dd;
+
+        statusEl.textContent = 'Loading events...';
+        listEl.innerHTML = '';
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (data) {
+            var events = (data && Array.isArray(data.events)) ? data.events : [];
+            if (!events.length) {
+              statusEl.textContent = 'No events found for this date.';
+              return;
+            }
+            statusEl.textContent = 'Found ' + events.length + ' events';
+            var frag = document.createDocumentFragment();
+            events.forEach(function (ev) {
+              var li = document.createElement('li');
+              var year = ev.year != null ? ev.year : '';
+              var text = (ev.text || '').replace(/\s+/g, ' ').trim();
+              var link = (ev.pages && ev.pages[0] && ev.pages[0].content_urls && ev.pages[0].content_urls.desktop && ev.pages[0].content_urls.desktop.page) ? ev.pages[0].content_urls.desktop.page : null;
+
+              li.innerHTML = '<strong>' + year + '</strong> — ' + text +
+                (link ? ' <a href="' + link + '" target="_blank" rel="noopener">Read more</a>' : '');
+              frag.appendChild(li);
+            });
+            listEl.appendChild(frag);
+          })
+          .catch(function (err) {
+            statusEl.textContent = 'Failed to load events. Please try again.';
+            // Optional: console.error(err);
+          });
+      } catch (e) {
+        statusEl.textContent = 'Invalid date.';
+      }
+    }
+
+    // Initialize date to today and fetch
+    dateInput.value = toInputDate(new Date());
+    fetchOnThisDay(dateInput.value);
+
+    // Handlers
+    refreshBtn.addEventListener('click', function () {
+      fetchOnThisDay(dateInput.value);
+    });
+    dateInput.addEventListener('change', function () {
+      fetchOnThisDay(dateInput.value);
+    });
+
+    // Ensure our inner tab highlights when shown
+    try { if (typeof window.openInnerTab === 'function') window.openInnerTab('history-today'); } catch (_) {}
+
+    hub.__history_today_initialized = true;
+  }
+
+  // Initialize when the news hub becomes visible or on load
+  function maybeInit() {
+    var hub = document.getElementById('newshub');
+    if (!hub) return;
+    // If already visible or soon-to-be visible, set up
+    ensureHistoryTodayUI();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', maybeInit);
+  } else {
+    setTimeout(maybeInit, 0);
+  }
+
+  // Also try after full load in case of dynamic layout
+  window.addEventListener('load', function () { setTimeout(maybeInit, 0); });
+})();
