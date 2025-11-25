@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
   <script defer src="{{ url_for('static', filename='tabs-inner.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='pong.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='hangman.js') }}"></script>
 </head>
 <body>
   <header>
@@ -64,6 +66,8 @@
         <button class="tablink gold" onclick="openInnerTab('snl')">Snakes & Ladders</button>
         <button class="tablink gold" onclick="openInnerTab('tictactoe')">Tic Tac Toe</button>
         <button class="tablink gold" onclick="openInnerTab('wordsearch')">Word Search</button>
+        <button class="tablink gold" onclick="openInnerTab('pong')">Pong</button>
+        <button class="tablink gold" onclick="openInnerTab('hangman')">Hangman</button>
         <button class="tablink gold" onclick="openInnerTab('pacman')">Pac-Man</button>
       </nav>
 
@@ -121,6 +125,53 @@
             <p id="wsStatus" style="margin:10px 0 0 0; font-weight:600;"></p>
           </div>
         </div>
+      </section>
+
+      <!-- Pong -->
+      <section id="pong" class="inner-tabcontent">
+        <h2>Pong</h2>
+        <canvas id="pongCanvas" width="600" height="400"></canvas>
+        <p id="pongScore">Player: 0 — AI: 0</p>
+
+        <div class="snake-controls">
+          <div class="dpad" role="group" aria-label="Pong controls">
+            <div class="dpad-row dpad-row-top">
+              <button class="dpad-btn up"
+                      onpointerdown="pongHold('UP')" onpointerup="pongStop()" onpointerleave="pongStop()" onpointercancel="pongStop()"
+                      aria-label="Up" type="button">↑</button>
+            </div>
+            <div class="dpad-row dpad-row-middle">
+              <button class="dpad-btn left" disabled aria-label="Left" type="button">←</button>
+              <button class="dpad-btn right" disabled aria-label="Right" type="button">→</button>
+            </div>
+            <div class="dpad-row dpad-row-bottom">
+              <button class="dpad-btn down"
+                      onpointerdown="pongHold('DOWN')" onpointerup="pongStop()" onpointerleave="pongStop()" onpointercancel="pongStop()"
+                      aria-label="Down" type="button">↓</button>
+            </div>
+          </div>
+          <button class="btn-outline" onclick="restartPong()" type="button">Restart</button>
+        </div>
+
+        <p style="font-size:12px; color:#9ca3af; margin-top:6px;">Use ↑/↓ arrow keys or the D‑Pad to move.</p>
+      </section>
+
+      <!-- Hangman -->
+      <section id="hangman" class="inner-tabcontent">
+        <h2>Hangman</h2>
+        <canvas id="hangmanCanvas" width="300" height="250"></canvas>
+        <p id="hangmanMasked" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 20px; letter-spacing: 2px; margin: 8px 0;">_</p>
+        <p id="hangmanWrong" class="muted" style="margin: 6px 0;">Wrong: –</p>
+
+        <div id="hangmanKeyboard" style="display:grid; grid-template-columns:repeat(13, minmax(0,1fr)); gap:6px; justify-items:stretch; margin: 10px auto; max-width: 620px;"></div>
+
+        <div class="quiz-actions" style="flex-wrap: wrap;">
+          <input id="hangmanWordGuess" type="text" inputmode="text" pattern="[A-Za-z]+" placeholder="Guess whole word" class="qr-input" style="max-width:280px;">
+          <button class="btn-outline" type="button" onclick="hangmanGuessWord()">Guess</button>
+          <button class="btn-gold" type="button" onclick="hangmanNewGame()">New Game</button>
+        </div>
+
+        <p id="hangmanMessage" class="muted" style="margin-top:6px;"></p>
       </section>
 
       <!-- Pac-Man -->
