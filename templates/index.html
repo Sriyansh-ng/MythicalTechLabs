@@ -13,6 +13,8 @@
   <script defer src="{{ url_for('static', filename='tabs-inner.js') }}"></script>
   <script defer src="{{ url_for('static', filename='pong.js') }}"></script>
   <script defer src="{{ url_for('static', filename='hangman.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='nim.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='madlibs.js') }}"></script>
 </head>
 <body>
   <header>
@@ -57,6 +59,54 @@
       if (target) target.style.display = 'block';
     }
   </script>
+  <script>
+    // Ensure at least one top-level tab and one inner tab are visible on load
+    (function () {
+      function isVisible(el) {
+        return el && el.style.display !== 'none' && el.offsetParent !== null;
+      }
+      function ensureDefaultTabs() {
+        try {
+          // If no top-level tabcontent visible, show Game Hub
+          var anyVisible = false;
+          document.querySelectorAll('.tabcontent').forEach(function (el) {
+            if (isVisible(el)) anyVisible = true;
+          });
+          if (!anyVisible) {
+            if (typeof window.switchTab === 'function') {
+              window.switchTab('gamehub');
+            } else {
+              var gh = document.getElementById('gamehub');
+              if (gh) gh.style.display = 'block';
+            }
+          }
+          // Ensure a default inner tab is shown for visible hubs
+          setTimeout(function () {
+            var gh = document.getElementById('gamehub');
+            if (gh && isVisible(gh)) {
+              if (typeof window.openInnerTab === 'function') {
+                window.openInnerTab('snake');
+              } else {
+                var first = gh.querySelector('.inner-tabcontent');
+                if (first) first.style.display = 'block';
+              }
+            }
+            var qh = document.getElementById('quizhub');
+            if (qh && isVisible(qh)) {
+              if (typeof window.openInnerTab === 'function') {
+                window.openInnerTab('quizGeneral');
+              }
+            }
+          }, 0);
+        } catch (e) { /* no-op */ }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ensureDefaultTabs);
+      } else {
+        setTimeout(ensureDefaultTabs, 0);
+      }
+    })();
+  </script>
 
   <main>
     <!-- Game Hub with inner tabs -->
@@ -68,6 +118,7 @@
         <button class="tablink gold" onclick="openInnerTab('wordsearch')">Word Search</button>
         <button class="tablink gold" onclick="openInnerTab('pong')">Pong</button>
         <button class="tablink gold" onclick="openInnerTab('hangman')">Hangman</button>
+        <button class="tablink gold" onclick="openInnerTab('nim')">Nim</button>
         <button class="tablink gold" onclick="openInnerTab('pacman')">Pac-Man</button>
       </nav>
 
@@ -174,6 +225,160 @@
         <p id="hangmanMessage" class="muted" style="margin-top:6px;"></p>
       </section>
 
+      <!-- Nim -->
+      <section id="nim" class="inner-tabcontent">
+        <h2>Nim</h2>
+
+        <div id="nim21Grid" class="nim21-grid" style="display:grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap:8px; margin: 10px auto; max-width: 560px;"></div>
+
+        <p id="nimStatus" class="muted" style="margin-top:6px;"></p>
+
+        <script>
+          // Nim 21: 21 numbered buttons. Click the next number up to 3 times per turn. AI uses a mixed strategy.
+          (function () {
+            var grid = document.getElementById('nim21Grid');
+            if (!grid) return;
+
+            var statusEl = document.getElementById('nimStatus');
+
+            var MAX_NUM = 21;
+            var nextNumber = 1;     // next untaken number
+            var playerTurn = true;  // player starts
+            var gameOver = false;
+
+            var turnClicks = 0;
+            var turnTimer = null;
+            var buttons = [];
+
+            function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+            function clearTurnTimer() { if (turnTimer) { clearTimeout(turnTimer); turnTimer = null; } }
+            function startOrResetTurnTimer() { clearTurnTimer(); turnTimer = setTimeout(endPlayerTurn, 1000); }
+
+            function buildGrid() {
+              grid.innerHTML = '';
+              buttons.length = 0;
+              for (var i = 1; i <= MAX_NUM; i++) {
+                (function (n) {
+                  var btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.textContent = String(n);
+                  btn.className = 'btn-outline';
+                  btn.style.minWidth = '44px';
+                  btn.style.padding = '8px 0';
+                  btn.disabled = (n !== nextNumber);
+                  btn.addEventListener('click', function () { onPlayerClick(n); });
+                  grid.appendChild(btn);
+                  buttons[n] = btn;
+                })(i);
+              }
+              updateGrid();
+            }
+
+            function updateGrid() {
+              for (var i = 1; i <= MAX_NUM; i++) {
+                var btn = buttons[i];
+                var taken = i < nextNumber;
+                btn.disabled = taken || i !== nextNumber || !playerTurn || gameOver;
+                btn.style.opacity = taken ? '0.5' : '1';
+              }
+            }
+
+            function applyTake(who, count) {
+              var remaining = MAX_NUM - (nextNumber - 1);
+              var n = Math.max(1, Math.min(3, Math.min(count | 0, remaining)));
+              for (var k = 0; k < n; k++) {
+                var num = nextNumber++;
+                var btn = buttons[num];
+                if (btn) {
+                  btn.disabled = true;
+                  btn.style.opacity = '0.5';
+                }
+              }
+              if (nextNumber > MAX_NUM) {
+                gameOver = true;
+                setStatus(who === 'player' ? 'You took 21. You win!' : 'AI took 21. AI wins!');
+              }
+              updateGrid();
+              return n;
+            }
+
+            function onPlayerClick(n) {
+              if (gameOver) return;
+              if (!playerTurn) { setStatus('Please wait. It’s the AI’s turn.'); return; }
+              if (n !== nextNumber) { setStatus('Click the next number: ' + nextNumber + '.'); return; }
+
+              applyTake('player', 1);
+              turnClicks += 1;
+              if (gameOver) return;
+
+              if (turnClicks >= 3) {
+                endPlayerTurn();
+              } else {
+                setStatus('You can click ' + (3 - turnClicks) + ' more ' + ((3 - turnClicks) === 1 ? 'time' : 'times') + '...');
+                startOrResetTurnTimer();
+                updateGrid();
+              }
+            }
+
+            function endPlayerTurn() {
+              clearTurnTimer();
+              if (gameOver) return;
+              playerTurn = false;
+              turnClicks = 0;
+              setStatus('AI is thinking...');
+              updateGrid();
+              setTimeout(aiTurn, 450);
+            }
+
+            function optimalTake() {
+              // Aim to end move with total taken ≡ 1 (mod 4)
+              var total = nextNumber - 1; // already taken
+              var n = (1 - (total % 4) + 4) % 4;
+              if (n === 0) n = 1;
+              n = Math.max(1, Math.min(3, n));
+              var remaining = MAX_NUM - (nextNumber - 1);
+              if (n > remaining) n = Math.max(1, Math.min(3, remaining));
+              return n;
+            }
+
+            function aiTurn() {
+              if (gameOver) return;
+              var remaining = MAX_NUM - (nextNumber - 1);
+              var toTake = (Math.random() < 0.7) ? optimalTake()
+                                                 : (1 + Math.floor(Math.random() * Math.min(3, remaining)));
+              setStatus('AI takes ' + toTake + (toTake === 1 ? ' number...' : ' numbers...'));
+
+              var count = toTake;
+              (function step() {
+                if (count <= 0 || gameOver) {
+                  if (!gameOver) {
+                    playerTurn = true;
+                    setStatus('Your turn. Click the next number (up to 3).');
+                    updateGrid();
+                  }
+                  return;
+                }
+                applyTake('ai', 1);
+                count -= 1;
+                if (!gameOver) setTimeout(step, 220);
+              })();
+            }
+
+            function newGame() {
+              nextNumber = 1;
+              playerTurn = true;
+              gameOver = false;
+              turnClicks = 0;
+              clearTurnTimer();
+              buildGrid();
+              setStatus('Your turn. Click the next number (you can take up to 3).');
+            }
+
+            newGame();
+          })();
+        </script>
+      </section>
+
       <!-- Pac-Man -->
       <section id="pacman" class="inner-tabcontent">
         <h2>Pac-Man</h2>
@@ -256,7 +461,64 @@
         <button class="tablink gold" onclick="openInnerTab('quizScience')">Science Quiz</button>
         <button class="tablink gold" onclick="openInnerTab('quizHistory')">History Quiz</button>
         <button class="tablink gold" onclick="openInnerTab('quizMath')">Math Quiz</button>
+        <button class="tablink gold" onclick="openInnerTab('madlibs')">Mad Libs</button>
       </nav>
+
+      <!-- Mad Libs -->
+      <section id="madlibs" class="inner-tabcontent">
+        <h2>Mad Libs</h2>
+
+        <div id="madlibsForm" class="quiz-setup" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); width: 100%; max-width: 700px; margin: 0 auto;">
+          <label class="ml-field" style="display:block;">
+            <span>Adjective</span>
+            <input id="mlAdj" class="qr-input" type="text" placeholder="e.g., funny" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Noun</span>
+            <input id="mlNoun" class="qr-input" type="text" placeholder="e.g., dog" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Verb (past tense)</span>
+            <input id="mlVerbPast" class="qr-input" type="text" placeholder="e.g., ran" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Adverb</span>
+            <input id="mlAdverb" class="qr-input" type="text" placeholder="e.g., quickly" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Plural Noun</span>
+            <input id="mlPlural" class="qr-input" type="text" placeholder="e.g., balloons" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Exclamation</span>
+            <input id="mlExclaim" class="qr-input" type="text" placeholder="e.g., Wow" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Body Part</span>
+            <input id="mlBody" class="qr-input" type="text" placeholder="e.g., elbow" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Place</span>
+            <input id="mlPlace" class="qr-input" type="text" placeholder="e.g., park" />
+          </label>
+          <label class="ml-field" style="display:block;">
+            <span>Number</span>
+            <input id="mlNumber" class="qr-input" type="number" inputmode="numeric" placeholder="e.g., 7" />
+          </label>
+        </div>
+
+        <div class="quiz-actions" style="flex-wrap:wrap; margin-top: 10px;">
+          <button id="madlibsGenerate" class="btn-gold" type="button">Generate Story</button>
+          <button id="madlibsClear" class="btn-outline" type="button">Clear</button>
+        </div>
+
+        <p id="madlibsError" class="muted" style="margin-top:6px;"></p>
+
+        <div id="madlibsResult" class="quiz-result" style="display:none; text-align:left; max-width: 700px;">
+          <h3>Your Story</h3>
+          <p id="madlibsStory" style="white-space: pre-wrap; line-height: 1.6;"></p>
+        </div>
+      </section>
 
       <section id="quizGeneral" class="inner-tabcontent">
         <h2>General Quiz</h2>
