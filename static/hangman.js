@@ -204,7 +204,8 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.textContent = ch;
-        btn.className = 'btn-outline';
+        // Add hang-key class so each key is a centered square
+        btn.className = 'btn-outline hang-key';
         btn.setAttribute('data-letter', ch);
         btn.addEventListener('click', () => guessLetter(ch));
         kb.appendChild(btn);
@@ -234,14 +235,34 @@
       guessInput.focus();
     };
 
-    // Keyboard input (desktop)
+    // Keyboard input (desktop) — ignore when typing in inputs/textarea
     function onKeyDown(e) {
       if (gameOver) return;
+
+      const target = e.target || document.activeElement;
+      const tag = (target && target.tagName ? target.tagName.toLowerCase() : '');
+      const inTextField = tag === 'input' || tag === 'textarea' || (target && target.isContentEditable === true);
+
       const key = e.key || '';
+
+      // If the user is typing in a text field, don't steal their keys.
+      if (inTextField) {
+        // But do allow Enter to submit from the "Guess whole word" input.
+        if (target === guessInput && key === 'Enter') {
+          e.preventDefault();
+          window.hangmanGuessWord();
+        }
+        return;
+      }
+
+      // Global letter shortcuts only when not typing in a field
       if (/^[a-zA-Z]$/.test(key)) {
         e.preventDefault();
         guessLetter(key.toUpperCase());
-      } else if (key === 'Enter') {
+        return;
+      }
+
+      if (key === 'Enter') {
         if (guessInput && guessInput.value) {
           e.preventDefault();
           window.hangmanGuessWord();
@@ -249,6 +270,38 @@
       }
     }
     window.addEventListener('keydown', onKeyDown);
+
+    // Ensure typing in the "Guess whole word" input isn't blocked by global key listeners (W/A/S/D, arrows, space)
+    (function protectHangmanTyping() {
+      function isGuessField(el) {
+        return el && (el === guessInput);
+      }
+      function shouldProtectKey(k) {
+        return k === 'w' || k === 'W' ||
+               k === 'a' || k === 'A' ||
+               k === 's' || k === 'S' ||
+               k === 'd' || k === 'D' ||
+               k === 'ArrowUp' || k === 'ArrowDown' ||
+               k === 'ArrowLeft' || k === 'ArrowRight' ||
+               k === ' ' || k === 'Spacebar';
+      }
+      function guard(e) {
+        const active = document.activeElement || e.target;
+        if (!isGuessField(active)) return;
+        if (shouldProtectKey(e.key)) {
+          // Do not preventDefault so the character types; just stop other handlers from seeing it
+          if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+          else e.stopPropagation();
+        }
+      }
+      // Capture-phase on both window and document to beat bubble-phase game handlers
+      window.addEventListener('keydown', guard, true);
+      window.addEventListener('keypress', guard, true);
+      window.addEventListener('keyup', guard, true);
+      document.addEventListener('keydown', guard, true);
+      document.addEventListener('keypress', guard, true);
+      document.addEventListener('keyup', guard, true);
+    })();
 
     // Initialize UI and start first game
     buildKeyboard();

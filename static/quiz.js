@@ -14,7 +14,43 @@
       return arr;
     }
     function buildOptionsFrom(correct, distractors) {
-      const pool = distractors.filter(d => d !== correct);
+      // Start with items that are not exactly the correct answer
+      let pool = distractors.filter(d => d !== correct);
+
+      // Category-aware filter: if the correct answer belongs to a known set,
+      // remove any distractor from that same set so there's only one valid answer.
+      try {
+        const norm = (s) => String(s || '').trim();
+        const CATEGORIES = {
+          oceans: new Set(['Pacific','Atlantic','Indian','Arctic','Southern']),
+          seas: new Set([
+            'Red Sea','Caribbean Sea','Mediterranean Sea','Arabian Sea','Baltic Sea','Black Sea','Bering Sea',
+            'Coral Sea','South China Sea','North Sea','Caspian Sea','Aegean Sea','Andaman Sea','Java Sea',
+            'Sargasso Sea','Tyrrhenian Sea','Adriatic Sea','Ionian Sea','Norwegian Sea','Barents Sea'
+          ])
+        };
+        const cVal = norm(correct);
+        let matchedSet = null;
+        for (const key in CATEGORIES) {
+          if (CATEGORIES[key].has(cVal)) { matchedSet = CATEGORIES[key]; break; }
+        }
+        if (matchedSet) {
+          pool = pool.filter(d => !matchedSet.has(norm(d)));
+        }
+      } catch (_) { /* noop */ }
+
+      // Heuristic fallback by keyword (covers cases where values include category words)
+      try {
+        const lc = (v) => String(v || '').toLowerCase();
+        const c = lc(correct);
+        const tokens = ['sea','ocean','river','lake','mountain','desert'];
+        const hit = tokens.find(t => new RegExp('\\b' + t + '\\b', 'i').test(c));
+        if (hit) {
+          const re = new RegExp('\\b' + hit + '\\b', 'i');
+          pool = pool.filter(d => !re.test(lc(d)));
+        }
+      } catch (_) { /* noop */ }
+
       shuffleLocal(pool);
       const chosen = pool.slice(0, 3);
       const options = shuffleLocal([correct, ...chosen]);

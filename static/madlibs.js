@@ -22,6 +22,23 @@
     const resultWrap = document.getElementById('madlibsResult');
     const storyEl = document.getElementById('madlibsStory');
 
+    // Hard-bind handlers so Generate/Clear always work (even if other listeners interfere)
+    try {
+      if (btnGen) {
+        btnGen.disabled = false;
+        btnGen.style.pointerEvents = 'auto';
+        btnGen.onclick = function (e) { try { if (e) e.preventDefault(); generate(); } catch (_) {} return false; };
+      }
+      if (btnClear) {
+        btnClear.disabled = false;
+        btnClear.style.pointerEvents = 'auto';
+        btnClear.onclick = function (e) { try { if (e) e.preventDefault(); clearAll(); } catch (_) {} return false; };
+      }
+      // Also expose helpers for inline fallback if ever needed
+      window.madlibsGenerateStory = function (e) { try { if (e) e.preventDefault(); generate(); } catch (_) {} return false; };
+      window.madlibsClear = function (e) { try { if (e) e.preventDefault(); clearAll(); } catch (_) {} return false; };
+    } catch (_) {}
+
     // Ensure the Mad Libs panel is fully interactive (no accidental overlays/disabled states)
     (function ensureInteractable() {
       try {
@@ -200,71 +217,29 @@
       }
     })();
 
-    // Stop global click handlers from swallowing clicks inside Mad Libs and ensure buttons work
-    (function guardClicksAndDelegate() {
-      const panel = document.getElementById('madlibs');
+    // Minimal, safe click handling: always trigger generate/clear on button clicks (capture phase), no global blocking
+    (function ensureButtonsWork() {
+      const gen = document.getElementById('madlibsGenerate');
+      const clr = document.getElementById('madlibsClear');
 
-      function stopIfInside(e) {
-        if (panel && panel.contains(e.target)) {
-          if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-          else e.stopPropagation();
-        }
-      }
-
-      // Capture-phase guards
-      window.addEventListener('pointerdown', stopIfInside, true);
-      window.addEventListener('click', stopIfInside, true);
-      document.addEventListener('pointerdown', stopIfInside, true);
-      document.addEventListener('click', stopIfInside, true);
-
-      // Direct, robust handlers on the buttons (capture + bubble)
-      if (panel) {
-        const gen = document.getElementById('madlibsGenerate');
-        const clr = document.getElementById('madlibsClear');
-        const callGen = function (e) { try { generate(); } catch (_) {} };
-        const callClr = function (e) { try { clearAll(); } catch (_) {} };
-
-        if (gen) {
-          ['pointerdown','pointerup','mousedown','mouseup','click'].forEach(function (ev) {
-            gen.addEventListener(ev, function (e) {
-              // Keep the event local and ensure action fires
-              if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation(); else e.stopPropagation();
-              // Don't block default focus, but always run our action on 'click' and 'pointerup'
-              if (ev === 'click' || ev === 'pointerup' || ev === 'mouseup') callGen(e);
-            }, true);
-            gen.addEventListener(ev, function (e) {
-              if (ev === 'click') callGen(e);
-            }, false);
-          });
-        }
-        if (clr) {
-          ['pointerdown','pointerup','mousedown','mouseup','click'].forEach(function (ev) {
-            clr.addEventListener(ev, function (e) {
-              if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation(); else e.stopPropagation();
-              if (ev === 'click' || ev === 'pointerup' || ev === 'mouseup') callClr(e);
-            }, true);
-            clr.addEventListener(ev, function (e) {
-              if (ev === 'click') callClr(e);
-            }, false);
-          });
-        }
-      }
-
-      // Delegated backup in capture (in case buttons are re-rendered)
-      function delegate(e) {
-        if (!panel || !panel.contains(e.target)) return;
-        const t = e.target;
-        const isGen = t.id === 'madlibsGenerate' || (t.closest && t.closest('#madlibsGenerate'));
-        const isClear = t.id === 'madlibsClear' || (t.closest && t.closest('#madlibsClear'));
-        if (isGen) {
-          if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation(); else e.stopPropagation();
+      if (gen) {
+        gen.disabled = false;
+        gen.style.pointerEvents = 'auto';
+        // Capture-phase so it runs even if other listeners interfere; no stopPropagation here
+        gen.addEventListener('click', function (e) {
+          e.preventDefault();
           try { generate(); } catch (_) {}
-        } else if (isClear) {
-          if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation(); else e.stopPropagation();
-          try { clearAll(); } catch (_) {}
-        }
+        }, true);
       }
-      document.addEventListener('click', delegate, true);
+
+      if (clr) {
+        clr.disabled = false;
+        clr.style.pointerEvents = 'auto';
+        clr.addEventListener('click', function (e) {
+          e.preventDefault();
+          try { clearAll(); } catch (_) {}
+        }, true);
+      }
     })();
 
     function setError(msg) {

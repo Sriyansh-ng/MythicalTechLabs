@@ -9,7 +9,6 @@
     upper: document.getElementById('pwUpper'),
     nums: document.getElementById('pwNumbers'),
     syms: document.getElementById('pwSymbols'),
-    ambi: document.getElementById('pwAmbiguous'),
     strength: document.getElementById('pwStrength'),
   };
 
@@ -22,12 +21,6 @@
     nums: '0123456789',
     syms: '!@#$%^&*()-_=+[]{};:,.<>?/~`|\\',
   };
-
-  const AMBIGUOUS = new Set(['0', 'O', 'o', '1', 'l', 'I', '|', '`', '\'', '"']);
-
-  function filterAmbiguous(s) {
-    return [...s].filter(ch => !AMBIGUOUS.has(ch)).join('');
-  }
 
   function randInt(n) {
     return Math.floor(Math.random() * n);
@@ -76,14 +69,9 @@
       if (els.len) els.len.value = String(length);
     }
 
-    // Build combined set (with optional ambiguous filtering)
-    const avoidAmb = !!els.ambi?.checked;
-    const pools = selected.map(key => avoidAmb ? filterAmbiguous(SETS[key]) : SETS[key]);
+    // Build combined set (no ambiguous filtering; full sets only)
+    const pools = selected.map(key => SETS[key]);
     const all = pools.join('');
-    if (!all.length) {
-      alert('No characters available with current options. Try disabling "Avoid ambiguous".');
-      return '';
-    }
 
     // Ensure at least one from each selected pool
     const result = [];

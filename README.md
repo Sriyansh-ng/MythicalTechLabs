@@ -1,7 +1,6 @@
 <nav class="inner-tabs">
         <button class="tablink gold" onclick="openInnerTab('snake')">Snake Game</button>
         <button class="tablink gold" onclick="openInnerTab('tictactoe')">Tic-Tac-Toe</button>
-        <button class="tablink gold" onclick="openInnerTab('pacman')">Pac-Man</button>
         <!-- ... existing code ... -->
         <!-- Pong tab button -->
         <button class="tablink gold" onclick="openInnerTab('pong')">Pong</button>

@@ -15,6 +15,7 @@
   <script defer src="{{ url_for('static', filename='hangman.js') }}"></script>
   <script defer src="{{ url_for('static', filename='nim.js') }}"></script>
   <script defer src="{{ url_for('static', filename='madlibs.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='generate_fallbacks.js') }}"></script>
 </head>
 <body>
   <header>
@@ -119,7 +120,6 @@
         <button class="tablink gold" onclick="openInnerTab('pong')">Pong</button>
         <button class="tablink gold" onclick="openInnerTab('hangman')">Hangman</button>
         <button class="tablink gold" onclick="openInnerTab('nim')">Nim</button>
-        <button class="tablink gold" onclick="openInnerTab('pacman')">Pac-Man</button>
       </nav>
 
       <!-- Snake Game -->
@@ -205,6 +205,49 @@
         </div>
 
         <p style="font-size:12px; color:#9ca3af; margin-top:6px;">Use ↑/↓ arrow keys or the D‑Pad to move.</p>
+        <style>
+          /* Scope to Pong only: center D‑Pad arrows and give consistent square sizes */
+          #pong .dpad-row-top,
+          #pong .dpad-row-middle,
+          #pong .dpad-row-bottom {
+            display: grid;
+            gap: 8px;
+            justify-content: center;
+          }
+          /* Top/bottom rows have a single centered button */
+          #pong .dpad-row-top,
+          #pong .dpad-row-bottom {
+            grid-template-columns: repeat(3, 52px);
+          }
+          /* Middle row has left and right with a gap in between */
+          #pong .dpad-row-middle {
+            grid-template-columns: 52px 52px;
+          }
+          #pong .dpad-btn {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            line-height: 1;
+            font-size: 22px;
+            font-weight: 700;
+            box-sizing: border-box;
+            border-radius: 12px;
+          }
+          #pong .dpad-btn[disabled] { opacity: 0.5; }
+
+          @media (max-width: 480px) {
+            #pong .dpad-row-top,
+            #pong .dpad-row-middle,
+            #pong .dpad-row-bottom { gap: 6px; }
+            #pong .dpad-btn {
+              width: 44px;
+              height: 44px;
+              font-size: 20px;
+            }
+          }
+        </style>
       </section>
 
       <!-- Hangman -->
@@ -230,6 +273,10 @@
         <h2>Nim</h2>
 
         <div id="nim21Grid" class="nim21-grid" style="display:grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap:8px; margin: 10px auto; max-width: 560px;"></div>
+
+        <div class="quiz-actions" style="justify-content:center; margin-top:8px;">
+          <button id="nimRestart" class="btn-outline" type="button" aria-label="Restart Nim">Restart</button>
+        </div>
 
         <p id="nimStatus" class="muted" style="margin-top:6px;"></p>
 
@@ -374,83 +421,19 @@
               setStatus('Your turn. Click the next number (you can take up to 3).');
             }
 
+            // Hook up Restart button
+            var nimRestartEl = document.getElementById('nimRestart');
+            if (nimRestartEl) {
+              nimRestartEl.addEventListener('click', function () {
+                newGame();
+              });
+            }
+
             newGame();
           })();
         </script>
       </section>
 
-      <!-- Pac-Man -->
-      <section id="pacman" class="inner-tabcontent">
-        <h2>Pac-Man</h2>
-        <canvas id="pacmanCanvas" width="448" height="448"></canvas>
-        <p id="pacmanScore">Score: 0</p>
-
-        <div class="snake-controls">
-          <div class="dpad" role="group" aria-label="Pac-Man controls">
-            <div class="dpad-row dpad-row-top">
-              <button class="dpad-btn up" onclick="pacmanSetDirection('UP')" aria-label="Up" type="button">↑</button>
-            </div>
-            <div class="dpad-row dpad-row-middle">
-              <button class="dpad-btn left" onclick="pacmanSetDirection('LEFT')" aria-label="Left" type="button">←</button>
-              <button class="dpad-btn right" onclick="pacmanSetDirection('RIGHT')" aria-label="Right" type="button">→</button>
-            </div>
-            <div class="dpad-row dpad-row-bottom">
-              <button class="dpad-btn down" onclick="pacmanSetDirection('DOWN')" aria-label="Down" type="button">↓</button>
-            </div>
-          </div>
-          <button class="btn-outline" onclick="restartPacman()" type="button">Restart</button>
-        </div>
-        <script>
-          // Robustly trigger the same path as keyboard controls
-          (function () {
-            function fireKey(target, detail) {
-              try {
-                const e = new KeyboardEvent('keydown', {
-                  key: detail.key,
-                  code: detail.code,
-                  bubbles: true,
-                  cancelable: true
-                });
-                // Some engines ignore keyCode/which on init; define getters
-                try { Object.defineProperty(e, 'keyCode', { get: () => detail.keyCode }); } catch (_) {}
-                try { Object.defineProperty(e, 'which', { get: () => detail.which }); } catch (_) {}
-                target.dispatchEvent(e);
-              } catch (_) {
-                // Fallback generic event
-                const e = new Event('keydown', { bubbles: true, cancelable: true });
-                e.key = detail.key;
-                e.code = detail.code;
-                e.keyCode = detail.keyCode;
-                e.which = detail.which;
-                target.dispatchEvent(e);
-              }
-            }
-
-            window.pacmanSetDirection = function (dir) {
-              const map = {
-                UP:    { key: 'ArrowUp',    code: 'ArrowUp',    keyCode: 38, which: 38 },
-                DOWN:  { key: 'ArrowDown',  code: 'ArrowDown',  keyCode: 40, which: 40 },
-                LEFT:  { key: 'ArrowLeft',  code: 'ArrowLeft',  keyCode: 37, which: 37 },
-                RIGHT: { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, which: 39 }
-              };
-              const detail = map[dir];
-              if (!detail) return;
-
-              const canvas = document.getElementById('pacmanCanvas');
-              const targets = [window, document];
-              if (document.body) targets.push(document.body);
-              if (canvas) targets.push(canvas);
-
-              // Dispatch to multiple common listeners
-              for (const t of targets) {
-                fireKey(t, detail);
-              }
-            };
-          })();
-        </script>
-
-        <p style="font-size:12px; color:#9ca3af; margin-top:6px;">Use arrow keys or the D‑Pad to move.</p>
-      </section>
 
     </section>
 
@@ -929,7 +912,6 @@
   <script src="{{ url_for('static', filename='color_palette.js') }}"></script>
   <script src="{{ url_for('static', filename='news.js') }}"></script>
   <script src="{{ url_for('static', filename='history_quiz.js') }}"></script>
-  <script src="{{ url_for('static', filename='pacman.js') }}"></script>
 
   <script>
     function openTab(tabName) {
