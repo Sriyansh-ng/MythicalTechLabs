@@ -672,6 +672,8 @@
         <button class="tablink gold" onclick="openInnerTab('passgen')">Password Generator</button>
         <button class="tablink gold" onclick="openInnerTab('countdown')">Countdown Timer</button>
         <button class="tablink gold" onclick="openInnerTab('unitconv')">Unit Converter</button>
+        <button class="tablink gold" onclick="openInnerTab('gpacalc')">GPA Calculator</button>
+        <button class="tablink gold" onclick="openInnerTab('spinner')">Wheel Spinner</button>
         <button class="tablink gold" onclick="openInnerTab('colorpal')">Color Palette</button>
       </nav>
 
@@ -826,6 +828,135 @@
         </div>
       </section>
 
+      <section id="gpacalc" class="inner-tabcontent">
+        <h2>GPA Calculator</h2>
+        <div class="uc-wrap" style="display:grid; gap:14px; max-width:560px; margin:0 auto;">
+          <div class="uc-row" style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span>Class 1</span>
+              <select id="gpa1" class="quiz-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A</option><option>A-</option>
+                <option>B+</option><option>B</option><option>B-</option>
+                <option>C+</option><option>C</option><option>C-</option>
+                <option>D+</option><option>D</option><option>D-</option>
+                <option>F</option>
+              </select>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span>Class 2</span>
+              <select id="gpa2" class="quiz-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A</option><option>A-</option>
+                <option>B+</option><option>B</option><option>B-</option>
+                <option>C+</option><option>C</option><option>C-</option>
+                <option>D+</option><option>D</option><option>D-</option>
+                <option>F</option>
+              </select>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span>Class 3</span>
+              <select id="gpa3" class="quiz-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A</option><option>A-</option>
+                <option>B+</option><option>B</option><option>B-</option>
+                <option>C+</option><option>C</option><option>C-</option>
+                <option>D+</option><option>D</option><option>D-</option>
+                <option>F</option>
+              </select>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span>Class 4</span>
+              <select id="gpa4" class="quiz-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A</option><option>A-</option>
+                <option>B+</option><option>B</option><option>B-</option>
+                <option>C+</option><option>C</option><option>C-</option>
+                <option>D+</option><option>D</option><option>D-</option>
+                <option>F</option>
+              </select>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span>Class 5</span>
+              <select id="gpa5" class="quiz-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A</option><option>A-</option>
+                <option>B+</option><option>B</option><option>B-</option>
+                <option>C+</option><option>C</option><option>C-</option>
+                <option>D+</option><option>D</option><option>D-</option>
+                <option>F</option>
+              </select>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span>Class 6</span>
+              <select id="gpa6" class="quiz-select">
+                <option value="">Select</option>
+                <option>A+</option><option>A</option><option>A-</option>
+                <option>B+</option><option>B</option><option>B-</option>
+                <option>C+</option><option>C</option><option>C-</option>
+                <option>D+</option><option>D</option><option>D-</option>
+                <option>F</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="quiz-actions">
+            <button id="gpaCalcBtn" class="btn-gold" type="button">Calculate GPA</button>
+            <button id="gpaClearBtn" class="btn-outline" type="button">Clear</button>
+          </div>
+
+          <div class="quiz-result" id="gpaResultCard" style="display:none;">
+            <h3>Your GPA</h3>
+            <p id="gpaOutput" style="font-size:22px; font-weight:700;"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="spinner" class="inner-tabcontent">
+        <h2>Wheel Spinner</h2>
+        <div class="uc-wrap" style="display:grid; gap:16px; max-width:860px; margin:0 auto;">
+          <div class="uc-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;">
+            <div class="card" style="display:grid; place-items:center; padding:12px;">
+              <canvas id="spinnerCanvas" width="420" height="420" style="max-width:100%; height:auto;"></canvas>
+              <div id="spinnerResult" class="muted" style="margin-top:8px; font-weight:600;"></div>
+            </div>
+            <div class="card" style="padding:12px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <strong>Items (max 15)</strong>
+                <div style="display:flex; gap:8px;">
+                  <button id="spinnerAdd" class="btn-outline" type="button">Add Item</button>
+                  <button id="spinnerClear" class="btn-outline" type="button">Clear</button>
+                </div>
+              </div>
+              <div id="spList" style="display:grid; grid-template-columns: 1fr; gap:8px;">
+                <!-- Inputs injected by JS -->
+              </div>
+              <div class="quiz-actions" style="margin-top:12px;">
+                <button id="spinnerSpin" class="btn-gold" type="button">Spin</button>
+                <button id="spinnerShuffle" class="btn-outline" type="button">Shuffle</button>
+              </div>
+              <p class="muted" style="margin-top:6px;">Tip: Double‑click a wheel segment to edit that label directly.</p>
+            </div>
+          </div>
+        </div>
+        <style>
+          #spinner .card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+          }
+          #spinner #spList input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            outline: none;
+          }
+        </style>
+      </section>
+
       <section id="colorpal" class="inner-tabcontent">
         <h2>Color Palette</h2>
         <div class="uc-wrap" style="display:grid; gap:14px; max-width:860px;">
@@ -884,8 +1015,7 @@
     <section id="about" class="tabcontent">
       <h2>About Us</h2>
       <p>
-        <strong>Mythical Tech Labs</strong> - We develop games, quizzes and utilities for all age groups that are easy and fun to play with.
-        Contact us at mythicalStudios12@gmail.com to provide us with suggestions and feedback.
+        <strong>Mythical Tech Labs</strong> - I am Sriyansh Gavarraju, an 8th grader in Skyview Middle School, &amp; I develop fun games, quizzes, and utitlities for all age groups. Contact us at mythicalStudios12@gmail.com to provide us with suggestions and feedback.
       </p>
     </section>
   </main>
@@ -909,6 +1039,8 @@
   <script src="{{ url_for('static', filename='password.js') }}"></script>
   <script src="{{ url_for('static', filename='countdown.js') }}"></script>
   <script src="{{ url_for('static', filename='unit_converter.js') }}"></script>
+  <script src="{{ url_for('static', filename='gpa.js') }}"></script>
+  <script src="{{ url_for('static', filename='spinner.js') }}"></script>
   <script src="{{ url_for('static', filename='color_palette.js') }}"></script>
   <script src="{{ url_for('static', filename='news.js') }}"></script>
   <script src="{{ url_for('static', filename='history_quiz.js') }}"></script>

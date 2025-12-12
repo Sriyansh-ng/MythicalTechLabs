@@ -218,10 +218,41 @@
     });
   }
 
+  // ===== GPA Calculator =====
+  function attachGpa() {
+    var calcBtn = document.getElementById('gpaCalcBtn');
+    var clearBtn = document.getElementById('gpaClearBtn');
+
+    function val(id){ var el=document.getElementById(id); return (el && el.value) ? el.value.trim().toUpperCase() : ''; }
+    function calc() {
+      var grades = ['gpa1','gpa2','gpa3','gpa4','gpa5','gpa6'].map(val);
+      if (grades.some(g => !g)) { alert('Please select a letter grade for all six classes.'); return; }
+      var map = {'A+':4.0,'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C':2.0,'C-':1.7,'D+':1.3,'D':1.0,'D-':0.7,'F':0.0};
+      var nums = grades.map(g => map[g]);
+      if (nums.some(n => n==null)) { alert('Use standard letter grades (A+, A, …, D-, F).'); return; }
+      var gpa = nums.reduce((a,b)=>a+b,0)/nums.length;
+      var out = document.getElementById('gpaOutput');
+      var card = document.getElementById('gpaResultCard');
+      if (out) out.textContent = gpa.toFixed(2);
+      if (card) card.style.display = 'block';
+    }
+    function clearAll() {
+      ['gpa1','gpa2','gpa3','gpa4','gpa5','gpa6'].forEach(function(id){ var el=document.getElementById(id); if (el) el.value=''; });
+      var out = document.getElementById('gpaOutput');
+      var card = document.getElementById('gpaResultCard');
+      if (out) out.textContent = '';
+      if (card) card.style.display = 'none';
+    }
+
+    bind(calcBtn, calc);
+    bind(clearBtn, clearAll);
+  }
+
   onReady(function () {
     attachQr();
     attachPassword();
     attachPalette();
     attachMadLibs();
+    attachGpa();
   });
 })();
