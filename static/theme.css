@@ -63,6 +63,48 @@ h2, .tablink, button, .quiz-card, .quiz-setup, .quiz-result {
   border-color: #FFD700;
 }
 
+/* Hangman-specific: remove ALL button styling (no bubbles, no boxes, plain text) */
+#hangman .hang-key,
+#hangman .btn-outline,
+#hangman button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 4px 4px 0 !important; /* small spacing between letters without boxes */
+  transform: none !important;
+}
+
+/* No hover/active/focus visuals for Hangman keys */
+#hangman .hang-key:hover,
+#hangman .btn-outline:hover,
+#hangman button:hover,
+#hangman .hang-key:active,
+#hangman .btn-outline:active,
+#hangman button:active,
+#hangman .hang-key:focus,
+#hangman .btn-outline:focus,
+#hangman button:focus {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transform: none !important;
+}
+
+/* Make letters look like plain text but remain clickable */
+#hangman .hang-key {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  line-height: inherit !important;
+  font: inherit !important;
+  color: inherit !important;
+  cursor: pointer !important;
+}
+
 /* Quiz cards: enlarge padding and soften corners for polish */
 .quiz-card {
   padding: 24px !important;

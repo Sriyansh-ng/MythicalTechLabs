@@ -26,10 +26,25 @@
 
   function uniqueChoices(correct, genFn, count = 4) {
     const set = new Set([correct]);
-    while (set.size < count) {
+    let guard = 0;
+    const MAX_TRIES = 100;
+    while (set.size < count && guard < MAX_TRIES) {
       set.add(genFn());
+      guard++;
     }
-    return Array.from(set);
+    // Deterministic backfill if randomness didn't produce enough uniques
+    if (set.size < count) {
+      const base = Number(correct);
+      const fallbacks = [
+        base + 1, base - 1, base + 2, base - 2, base + 3, base - 3,
+        base + 4, base - 4, base + 5, base - 5
+      ];
+      for (const v of fallbacks) {
+        set.add(String(v));
+        if (set.size >= count) break;
+      }
+    }
+    return Array.from(set).slice(0, count);
   }
 
   function shuffle(arr) {
